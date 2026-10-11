@@ -56,13 +56,23 @@ class ShoppingController extends ChangeNotifier {
     super.dispose();
   }
 
+  /// Deduplicates lists by ID preserving latest updates
+  List<ShoppingList> _deduplicateLists(List<ShoppingList> inputLists) {
+    final uniqueMap = <String, ShoppingList>{};
+    for (var list in inputLists) {
+      uniqueMap[list.id] = list;
+    }
+    return uniqueMap.values.toList();
+  }
+
   Future<void> fetchLists(String token) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _lists = await _shoppingRepository.getLists(token);
+      final fetched = await _shoppingRepository.getLists(token);
+      _lists = _deduplicateLists(fetched);
       _isLoading = false;
       notifyListeners();
       startPolling(token);
@@ -76,7 +86,7 @@ class ShoppingController extends ChangeNotifier {
   Future<void> fetchListsSilent(String token) async {
     try {
       final updatedLists = await _shoppingRepository.getLists(token);
-      _lists = updatedLists;
+      _lists = _deduplicateLists(updatedLists);
       notifyListeners();
     } catch (_) {}
   }
@@ -157,7 +167,15 @@ class ShoppingController extends ChangeNotifier {
       final formattedTitle = _capitalizeTitle(title);
       final newList =
           await _shoppingRepository.createList(token, formattedTitle);
-      _lists.add(newList);
+
+      // Check if list already exists in _lists to prevent duplicate entries
+      final existingIndex = _lists.indexWhere((l) => l.id == newList.id);
+      if (existingIndex != -1) {
+        _lists[existingIndex] = newList;
+      } else {
+        _lists.add(newList);
+      }
+
       notifyListeners();
       return true;
     } catch (e) {
@@ -213,7 +231,13 @@ class ShoppingController extends ChangeNotifier {
       final listIndex = _lists.indexWhere((l) => l.id == listId);
       if (listIndex != -1) {
         final list = _lists[listIndex];
-        final updatedItems = List<ShoppingItem>.from(list.items)..add(newItem);
+        final itemIndex = list.items.indexWhere((i) => i.id == newItem.id);
+        final updatedItems = List<ShoppingItem>.from(list.items);
+        if (itemIndex != -1) {
+          updatedItems[itemIndex] = newItem;
+        } else {
+          updatedItems.add(newItem);
+        }
         _lists[listIndex] = list.copyWith(items: updatedItems);
         notifyListeners();
         return true;

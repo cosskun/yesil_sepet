@@ -203,7 +203,7 @@ class SmartCategorizer {
       final unitRaw = match.group(2)!.toLowerCase();
       String unit = unitRaw;
       if (unitRaw == 'kilo' || unitRaw == 'kilogram') unit = 'kg';
-      if (unitRaw == 'litre' || unitRaw == 'lt') unit = 'L';
+      if (unitRaw == 'litre' || unitRaw == 'lt' || unitRaw == 'l') unit = 'L';
       if (unitRaw == 'gram') unit = 'gr';
 
       extractedQuantity = '$val $unit';

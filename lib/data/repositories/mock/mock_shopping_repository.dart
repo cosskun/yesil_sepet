@@ -26,15 +26,22 @@ class MockShoppingRepository implements ShoppingRepository {
 
   @override
   Future<List<ShoppingList>> getLists(String token) async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return _mockLists;
+    await Future.delayed(const Duration(milliseconds: 300));
+    // Always return a defensive copy so mutations don't alter internal list structure directly
+    return _mockLists
+        .map((l) => l.copyWith(
+              items: List<ShoppingItem>.from(l.items),
+              members: List<ListMember>.from(l.members),
+            ))
+        .toList();
   }
 
   @override
   Future<ShoppingList> createList(String token, String title) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 400));
+    final newId = DateTime.now().millisecondsSinceEpoch.toString();
     final newList = ShoppingList(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: newId,
       title: title,
       ownerId: token,
       shareCode: 'code_${DateTime.now().millisecondsSinceEpoch % 10000}',
@@ -42,13 +49,20 @@ class MockShoppingRepository implements ShoppingRepository {
       createdAt: DateTime.now(),
       items: [],
     );
-    _mockLists.add(newList);
+
+    // Prevent duplicate entries by id
+    final existingIdx = _mockLists.indexWhere((l) => l.id == newList.id);
+    if (existingIdx != -1) {
+      _mockLists[existingIdx] = newList;
+    } else {
+      _mockLists.add(newList);
+    }
     return newList;
   }
 
   @override
   Future<bool> deleteList(String token, String listId) async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 300));
     _mockLists.removeWhere((l) => l.id == listId);
     return true;
   }
@@ -63,7 +77,7 @@ class MockShoppingRepository implements ShoppingRepository {
     String? quantity,
     double? price,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 250));
     final newItem = ShoppingItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
@@ -75,7 +89,15 @@ class MockShoppingRepository implements ShoppingRepository {
     );
     final index = _mockLists.indexWhere((l) => l.id == listId);
     if (index != -1) {
-      _mockLists[index].items.add(newItem);
+      final list = _mockLists[index];
+      final itemIdx = list.items.indexWhere((i) => i.id == newItem.id);
+      final updatedItems = List<ShoppingItem>.from(list.items);
+      if (itemIdx != -1) {
+        updatedItems[itemIdx] = newItem;
+      } else {
+        updatedItems.add(newItem);
+      }
+      _mockLists[index] = list.copyWith(items: updatedItems);
     }
     return newItem;
   }
@@ -112,7 +134,9 @@ class MockShoppingRepository implements ShoppingRepository {
               ? DateTime.now()
               : (isBought == false ? null : current.boughtAt),
         );
-        _mockLists[listIndex].items[itemIndex] = updated;
+        final updatedItems = List<ShoppingItem>.from(_mockLists[listIndex].items);
+        updatedItems[itemIndex] = updated;
+        _mockLists[listIndex] = _mockLists[listIndex].copyWith(items: updatedItems);
         return updated;
       }
     }
@@ -121,10 +145,13 @@ class MockShoppingRepository implements ShoppingRepository {
 
   @override
   Future<bool> deleteItem(String token, String listId, String itemId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 250));
     final listIndex = _mockLists.indexWhere((l) => l.id == listId);
     if (listIndex != -1) {
-      _mockLists[listIndex].items.removeWhere((i) => i.id == itemId);
+      final list = _mockLists[listIndex];
+      final updatedItems = List<ShoppingItem>.from(list.items)
+        ..removeWhere((i) => i.id == itemId);
+      _mockLists[listIndex] = list.copyWith(items: updatedItems);
       return true;
     }
     return false;
@@ -132,7 +159,7 @@ class MockShoppingRepository implements ShoppingRepository {
 
   @override
   Future<ShoppingList> archiveItems(String token, String listId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 250));
     final listIndex = _mockLists.indexWhere((l) => l.id == listId);
     if (listIndex != -1) {
       final list = _mockLists[listIndex];
@@ -148,7 +175,7 @@ class MockShoppingRepository implements ShoppingRepository {
 
   @override
   Future<Map<String, dynamic>> getShareInfo(String shareCode) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 250));
     final list = _mockLists.firstWhere((l) => l.shareCode == shareCode,
         orElse: () => throw Exception('Liste bulunamadı.'));
     return {
@@ -162,7 +189,7 @@ class MockShoppingRepository implements ShoppingRepository {
 
   @override
   Future<Map<String, dynamic>> joinList(String shareCode, String? token) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 250));
     final list = _mockLists.firstWhere((l) => l.shareCode == shareCode,
         orElse: () => throw Exception('Liste bulunamadı.'));
     final userToken = token ?? 'guest_1';
