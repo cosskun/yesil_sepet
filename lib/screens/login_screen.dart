@@ -4,6 +4,7 @@ import '../controllers/controllers.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import 'home_screen.dart';
+import 'settings_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -56,7 +57,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final authController = Provider.of<AuthController>(context);
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Color(0xff4a7856)),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => const SettingsDialog(),
+            ),
+            tooltip: 'Bağlantı Ayarları',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -187,8 +199,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                 const SizedBox(height: 24.0),
                 // Register Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     const Text(
                       'Hesabınız yok mu? ',

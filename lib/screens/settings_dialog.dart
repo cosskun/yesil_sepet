@@ -42,12 +42,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
         children: [
           Icon(Icons.settings_outlined, color: Color(0xff5eaa82)),
           SizedBox(width: 8.0),
-          Text(
-            'Bağlantı Ayarları',
-            style: TextStyle(
-              color: Color(0xff1c3d2b),
-              fontWeight: FontWeight.bold,
-              fontSize: 18.0,
+          Expanded(
+            child: Text(
+              'Bağlantı Ayarları',
+              style: TextStyle(
+                color: Color(0xff1c3d2b),
+                fontWeight: FontWeight.bold,
+                fontSize: 18.0,
+              ),
             ),
           ),
         ],
@@ -72,8 +74,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 style: TextStyle(fontSize: 12.0, color: Color(0xff5a7a68)),
               ),
               value: _isSyncEnabled,
-              activeColor: const Color(0xff5eaa82),
-              activeTrackColor: const Color(0xffa8e6cf).withOpacity(0.5),
+              activeThumbColor: const Color(0xff5eaa82),
+              activeTrackColor: const Color(0xffa8e6cf).withValues(alpha: 0.5),
               inactiveThumbColor: const Color(0xff5a7a68),
               contentPadding: EdgeInsets.zero,
               onChanged: (bool value) {

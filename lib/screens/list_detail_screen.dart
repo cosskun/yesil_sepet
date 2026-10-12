@@ -64,7 +64,9 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
             children: [
               Icon(Icons.add_shopping_cart, color: Color(0xff4a7856)),
               SizedBox(width: 8),
-              Text('Detaylı Ürün Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0)),
+              Expanded(
+                child: Text('Detaylı Ürün Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0)),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -146,6 +148,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
                 if (name.isNotEmpty) {
                   final price = double.tryParse(priceCtrl.text.replaceAll(',', '.'));
                   final qty = qtyCtrl.text.trim().isNotEmpty ? qtyCtrl.text.trim() : null;
+                  final nav = Navigator.of(ctx);
 
                   await controller.addItem(
                     token,
@@ -156,7 +159,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
                     quantity: qty,
                     price: price,
                   );
-                  if (mounted) Navigator.of(ctx).pop();
+                  if (mounted) nav.pop();
                 }
               },
               child: const Text('Ekle'),
@@ -180,7 +183,9 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
             children: [
               Icon(Icons.mic, color: Color(0xff4a7856)),
               SizedBox(width: 8),
-              Text('Sesle / Hızlı Çoklu Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17.0)),
+              Expanded(
+                child: Text('Sesle / Hızlı Çoklu Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17.0)),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -209,7 +214,10 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Ayrıştırılan Ürünler:', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xff0f2c1a))),
+                    const Expanded(
+                      child: Text('Ayrıştırılan Ürünler:', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xff0f2c1a))),
+                    ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
@@ -234,11 +242,9 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
                   ),
                   child: previewItems.isEmpty
                       ? const Center(child: Text('Ayrıştırılacak ürün bulunamadı.', style: TextStyle(color: Color(0xff506e5b), fontSize: 12)))
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: previewItems.length,
-                          itemBuilder: (context, index) {
-                            final item = previewItems[index];
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: previewItems.map((item) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4.0),
                               child: Row(
@@ -262,7 +268,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
                                 ],
                               ),
                             );
-                          },
+                          }).toList(),
                         ),
                 ),
               ],
@@ -277,10 +283,12 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
               onPressed: previewItems.isEmpty
                   ? null
                   : () async {
+                      final nav = Navigator.of(ctx);
+                      final messenger = ScaffoldMessenger.of(context);
                       final count = await controller.addMultipleItems(token, widget.listId, inputCtrl.text);
                       if (mounted) {
-                        Navigator.of(ctx).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        nav.pop();
+                        messenger.showSnackBar(
                           SnackBar(
                             content: Text('$count ürün otomatik ayrı ayrı eklendi!'),
                             backgroundColor: const Color(0xff4a7856),
@@ -339,7 +347,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
   Widget build(BuildContext context) {
     final authController = Provider.of<AuthController>(context);
     final shoppingController = Provider.of<ShoppingController>(context);
-    final token = authController.token!;
+    final token = authController.token ?? authController.currentUser?.id ?? 'guest';
 
     final listIndex = shoppingController.lists.indexWhere((l) => l.id == widget.listId);
     if (listIndex == -1) {
@@ -405,48 +413,54 @@ class _ListDetailScreenState extends State<ListDetailScreen> with SingleTickerPr
     final estPrice = shoppingList.totalEstimatedPrice;
     final bghtPrice = shoppingList.totalBoughtPrice;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xff4a7856).withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          )
-        ],
-        border: const Border(top: BorderSide(color: Color(0xffe3ece4))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Tahmini Toplam Tutar', style: TextStyle(fontSize: 11, color: Color(0xff506e5b))),
-              const SizedBox(height: 2),
-              Text(
-                '₺${estPrice.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff0f2c1a)),
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xff4a7856).withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, -4),
+            )
+          ],
+          border: const Border(top: BorderSide(color: Color(0xffe3ece4))),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Tahmini Toplam Tutar', style: TextStyle(fontSize: 11, color: Color(0xff506e5b)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(
+                    '₺${estPrice.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff0f2c1a)),
+                  ),
+                ],
               ),
-            ],
-          ),
-          Container(width: 1, height: 32, color: const Color(0xffe3ece4)),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Alınan / Harcanan', style: TextStyle(fontSize: 11, color: Color(0xff506e5b))),
-              const SizedBox(height: 2),
-              Text(
-                '₺${bghtPrice.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff4a7856)),
+            ),
+            Container(width: 1, height: 32, color: const Color(0xffe3ece4), margin: const EdgeInsets.symmetric(horizontal: 8.0)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Alınan / Harcanan', style: TextStyle(fontSize: 11, color: Color(0xff506e5b)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(
+                    '₺${bghtPrice.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xff4a7856)),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

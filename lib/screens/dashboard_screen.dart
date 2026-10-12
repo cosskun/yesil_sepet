@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../controllers/controllers.dart';
 import '../models/models.dart';
 import 'list_detail_screen.dart';
-import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -55,13 +54,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () async {
               final title = titleController.text.trim();
               if (title.isNotEmpty) {
+                final nav = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(context);
                 final authController = Provider.of<AuthController>(context, listen: false);
                 final shoppingController = Provider.of<ShoppingController>(context, listen: false);
                 final success = await shoppingController.createList(authController.token!, title);
                 if (mounted) {
-                  Navigator.of(context).pop();
+                  nav.pop();
                   if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text('"$title" listesi başarıyla oluşturuldu.'),
                         backgroundColor: const Color(0xff5eaa82),
@@ -69,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text(shoppingController.errorMessage ?? 'Liste oluşturulamadı.'),
                         backgroundColor: const Color(0xffff9a9e),
@@ -87,7 +88,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showShareDialog(ShoppingList list) {
-    final baseUrl = Uri.base.origin;
+    final hasWebOrigin = Uri.base.hasScheme && (Uri.base.scheme == 'http' || Uri.base.scheme == 'https');
+    final baseUrl = hasWebOrigin ? Uri.base.origin : 'https://yesilsepet.app';
     final shareUrl = '$baseUrl/#/join/${list.shareCode}';
 
     showModalBottomSheet(
@@ -104,9 +106,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Listeyi Paylaş',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Expanded(
+                  child: Text(
+                    'Listeyi Paylaş',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -304,7 +308,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           borderRadius: BorderRadius.circular(20.0),
                           border: Border.all(
                             color: progress == 1.0 && totalCount > 0
-                                ? const Color(0xff4a7856).withOpacity(0.3)
+                                ? const Color(0xff4a7856).withValues(alpha: 0.3)
                                 : const Color(0xffe3ece4),
                           ),
                         ),

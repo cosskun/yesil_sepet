@@ -109,7 +109,7 @@ class _JoinScreenState extends State<JoinScreen> {
                           borderRadius: BorderRadius.circular(28.0),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xff4a7856).withOpacity(0.1),
+                              color: const Color(0xff4a7856).withValues(alpha: 0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             )
@@ -163,12 +163,16 @@ class _JoinScreenState extends State<JoinScreen> {
                                   const SizedBox(height: 8.0),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const Icon(Icons.people_outline, size: 18.0, color: Color(0xff506e5b)),
                                       const SizedBox(width: 6.0),
-                                      Text(
-                                        'Mevcut Üye Sayısı: ${_shareInfo?['memberCount'] ?? 1}',
-                                        style: const TextStyle(fontSize: 13.0, color: Color(0xff506e5b)),
+                                      Flexible(
+                                        child: Text(
+                                          'Mevcut Üye Sayısı: ${_shareInfo?['memberCount'] ?? 1}',
+                                          style: const TextStyle(fontSize: 13.0, color: Color(0xff506e5b)),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -178,15 +182,22 @@ class _JoinScreenState extends State<JoinScreen> {
                             const SizedBox(height: 28.0),
 
                             // Join button (No input required!)
-                            ElevatedButton(
-                              onPressed: shoppingController.isLoading ? null : _handleJoin,
-                              child: shoppingController.isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                    )
-                                  : const Text('Listeye Katıl'),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: shoppingController.isLoading ? null : _handleJoin,
+                                icon: shoppingController.isLoading
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : const Icon(Icons.check_circle_outline),
+                                label: Text(shoppingController.isLoading ? 'Katılınıyor...' : 'Listeye Katıl'),
+                              ),
                             ),
                           ],
                         ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/controllers.dart';
 import 'dashboard_screen.dart';
 import 'login_screen.dart';
+import 'settings_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -53,24 +54,26 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () async {
               final title = titleController.text.trim();
               if (title.isNotEmpty) {
+                final nav = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(context);
                 final authController = Provider.of<AuthController>(context, listen: false);
                 final shoppingController = Provider.of<ShoppingController>(context, listen: false);
                 final success = await shoppingController.createList(authController.token!, title);
                 if (mounted) {
-                  Navigator.of(context).pop();
+                  nav.pop();
                   if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text('"$title" listesi başarıyla oluşturuldu.'),
                         backgroundColor: const Color(0xff5eaa82),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
-                    Navigator.of(context).push(
+                    nav.push(
                       MaterialPageRoute(builder: (context) => const DashboardScreen()),
                     );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text(shoppingController.errorMessage ?? 'Liste oluşturulamadı.'),
                         backgroundColor: const Color(0xffff9a9e),
@@ -105,7 +108,9 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Icon(Icons.person_outline, color: Color(0xff5eaa82)),
                 const SizedBox(width: 8.0),
-                Text('İsim: $name', style: const TextStyle(color: Color(0xff1c3d2b), fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text('İsim: $name', style: const TextStyle(color: Color(0xff1c3d2b), fontWeight: FontWeight.w600)),
+                ),
               ],
             ),
             const SizedBox(height: 12.0),
@@ -113,15 +118,29 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Icon(Icons.email_outlined, color: Color(0xff5eaa82)),
                 const SizedBox(width: 8.0),
-                Text('E-posta: ${email.isNotEmpty ? email : "Davetli Üye"}', style: const TextStyle(color: Color(0xff1c3d2b))),
+                Expanded(
+                  child: Text('E-posta: ${email.isNotEmpty ? email : "Davetli Üye"}', style: const TextStyle(color: Color(0xff1c3d2b))),
+                ),
               ],
             ),
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              showDialog(
+                context: context,
+                builder: (_) => const SettingsDialog(),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined, size: 16.0),
+            label: const Text('Bağlantı Ayarları'),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xff5a7a68)),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Kapat', style: TextStyle(color: Color(0xff5eaa82))),
+            child: const Text('Kapat', style: TextStyle(color: Color(0xff5eaa82), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -168,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : ListView.separated(
                     shrinkWrap: true,
                     itemCount: notifications.length,
-                    separatorBuilder: (_, __) => const Divider(color: Color(0xffe3ece4)),
+                    separatorBuilder: (context, index) => const Divider(color: Color(0xffe3ece4)),
                     itemBuilder: (context, index) {
                       final n = notifications[index];
                       return ListTile(
@@ -245,6 +264,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Color(0xff4a7856)),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => const SettingsDialog(),
+            ),
+            tooltip: 'Bağlantı Ayarları',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout_outlined, color: Color(0xffffb3a7)),
             onPressed: _logout,
             tooltip: 'Çıkış Yap',
@@ -261,27 +288,32 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Merhaba, ${user?.name ?? "Kullanıcı"} 👋',
-                        style: const TextStyle(
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xff1c3d2b),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Merhaba, ${user?.name ?? "Kullanıcı"} 👋',
+                          style: const TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff1c3d2b),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4.0),
-                      const Text(
-                        'Bugün ne alıyoruz?',
-                        style: TextStyle(
-                          fontSize: 14.0,
-                          color: Color(0xff5a7a68),
+                        const SizedBox(height: 4.0),
+                        const Text(
+                          'Bugün ne alıyoruz?',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: Color(0xff5a7a68),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12.0),
                   GestureDetector(
                     onTap: () => _showProfileInfo(context, user?.name ?? 'Kullanıcı', user?.email ?? 'eposta'),
                     child: Container(
@@ -314,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(20.0),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xff5eaa82).withOpacity(0.2),
+                      color: const Color(0xff5eaa82).withValues(alpha: 0.2),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     )
@@ -333,11 +365,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16.0),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildSummaryStat('Listelerim', '${shoppingController.lists.length} Liste'),
-                        Container(width: 1, height: 40, color: Colors.white24),
-                        _buildSummaryStat('Alınacak Ürünler', '$pendingItemsCount Ürün'),
+                        Expanded(child: _buildSummaryStat('Listelerim', '${shoppingController.lists.length} Liste')),
+                        Container(width: 1, height: 40, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 12.0)),
+                        Expanded(child: _buildSummaryStat('Alınacak Ürünler', '$pendingItemsCount Ürün')),
                       ],
                     ),
                   ],
@@ -362,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16.0,
                 mainAxisSpacing: 16.0,
-                childAspectRatio: 1.1,
+                childAspectRatio: 1.18,
                 children: [
                   _buildActionCard(
                     icon: Icons.list_alt_outlined,
@@ -486,8 +517,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14.5,
+                      fontSize: 14.0,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : const Color(0xff1c3d2b),
                     ),
@@ -495,6 +528,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 2.0),
                   Text(
                     subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11.0,
                       color: isDark ? Colors.white70 : const Color(0xff5a7a68),

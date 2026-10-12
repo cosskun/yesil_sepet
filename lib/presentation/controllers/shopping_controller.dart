@@ -37,7 +37,10 @@ class ShoppingController extends ChangeNotifier {
           ? RemoteShoppingRepository()
           : MockShoppingRepository());
 
+  bool enablePolling = true;
+
   void startPolling(String token) {
+    if (!enablePolling) return;
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       fetchListsSilent(token);

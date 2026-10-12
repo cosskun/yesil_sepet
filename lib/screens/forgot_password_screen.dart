@@ -36,12 +36,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               Icon(Icons.check_circle_outline, color: Color(0xff5eaa82)),
               SizedBox(width: 8.0),
-              Text(
-                'Şifre Sıfırlandı',
-                style: TextStyle(
-                  color: Color(0xff1c3d2b),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18.0,
+              Expanded(
+                child: Text(
+                  'Şifre Sıfırlandı',
+                  style: TextStyle(
+                    color: Color(0xff1c3d2b),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18.0,
+                  ),
                 ),
               ),
             ],
